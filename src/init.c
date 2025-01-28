@@ -9,8 +9,8 @@ static const char* usage() {
            "Usage: %s "GREEN"[OPTIONS]"RESET"\n"\
            "\n"\
            "TARGET SPECIFICATION:\n"\
-           "\t"GREEN"-i --ip"RESET" IP1,HOST2...\t\tAdd target IP addresses or hostnames\n"\
-           "\t"GREEN"-f --file"RESET" FILE\t\t\tAdd target IP addresses from file\n"\
+           "\t"GREEN"-i --ip"RESET" IP1,HOST2...\t\tAdd targets\n"\
+           "\t"GREEN"-f --file"RESET" FILE\t\t\tAdd targets from file\n"\
            "\n"\
            "HOST DISCOVERY:\n"\
            "\t"GREEN"-d --dns"RESET"\t\t\tEnable DNS resolution\n"\
@@ -21,7 +21,7 @@ static const char* usage() {
            "\t\t\t\t\tCONNECT/WINDOW/MAIMON/UDP)\n"\
            "\n"\
            "PORT SPECIFICATION:\n"\
-           "\t"GREEN"-p --port"RESET" PORT1,PORT2,...\tAdd target ports (range allowed)\n"\
+           "\t"GREEN"-p --port"RESET" PORT1,PORT2,...\tAdd target ports\n"\
            "\n"\
            "OS DETECTION:\n"\
            "\t"GREEN"-o --os"RESET"\t\t\t\tEnable OS detection\n"\
@@ -30,8 +30,8 @@ static const char* usage() {
            "\t"GREEN"-t --speedup"RESET" THREADS\t\tNumber of threads to use\n"\
            "\n"\
            "FIREWALL/IDS EVASION:\n"\
-           "\t"GREEN"-e --escape"RESET"\t\t\tEnable firewall/IDS evasion\n"\
-           "\t"GREEN"-n --ninja"RESET"\t\t\tSpoof source IP address\n"\
+           "\t"GREEN"-F --firewall"RESET"\t\t\tEnable firewall care\n"\
+           "\t"GREEN"-I --ids"RESET"\t\t\tEnable IDS care\n"\
            "\n"\
            "MISSCELLANEOUS:\n"\
            "\t"GREEN"-h --help"RESET"\t\t\tPrint this message\n"\
@@ -349,8 +349,8 @@ void getargs(const int ac, char** const av) {
         {"port", required_argument, 0, 'p'},
         {"os", no_argument, 0, 'o'},
         {"speedup", required_argument, 0, 't'},
-        {"escape", no_argument, 0, 'e'},
-        {"ninja", no_argument, 0, 'n'},
+        {"firewall", no_argument, 0, 'F'},
+        {"ids", no_argument, 0, 'I'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
@@ -387,13 +387,15 @@ void getargs(const int ac, char** const av) {
             data.opt.threads = atoi(optarg);
             if(data.opt.threads) break;
 
-            fprintf(stderr, "%s: invalid number of threads '%s'\n", av[0], optarg);
-            exit(EXIT_FAILURE);
-        case 'e':
-            data.opt.escape = YES;
+            failed = YES;
+            fprintf(stderr, "%s: invalid number of threads '%s'\n",
+                    av[0], optarg);
             break;
-        case 'n':
-            data.opt.ninja = YES;
+        case 'F':
+            data.opt.firewall = YES;
+            break;
+        case 'I':
+            data.opt.ids = YES;
             break;
         case 'h':
             printf(usage(), av[0]);
@@ -401,8 +403,8 @@ void getargs(const int ac, char** const av) {
             for(ushort x = 0; data.hosts[x]; x++) free(data.hosts[x]);
             exit(EXIT_SUCCESS);
         default:
-            fprintf(stderr, "try '%s -h' for more information\n", av[0]);
             failed = YES;
+            fprintf(stderr, "try '%s -h' for more information\n", av[0]);
         }
         if(failed) break;
     }

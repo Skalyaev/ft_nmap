@@ -42,9 +42,17 @@
 
   - [ ] `WORK IN PROGRESS`
 
-- [ ] IDS / Firewall Evasion
+- [ ] Firewall care
 
-  - [ ] `WORK IN PROGRESS`
+  - [ ] Fragmentation
+  - [ ] Source port manipulation
+  - [ ] MAC address spoofing
+  - [ ] Fake RST detection trial
+
+- [ ] IDS care
+
+  - [ ] Decoys
+  - [ ] Timing
 
 ## Install
 

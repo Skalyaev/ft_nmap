@@ -33,9 +33,6 @@ int main(const int ac, char** const av) {
     for(ubyte x = 0; x < data.opt.threads; x++)
         data.threads[x] = buffer + (x * PTHREAD_T_SIZE);
 
-    if(data.opt.escape && setup_escape() != EXIT_SUCCESS)
-        return bye();
-
     for(ubyte x = 0; x < data.opt.threads; x++) {
 
         if(pthread_create(data.threads[x], NULL, worker, NULL) == 0)

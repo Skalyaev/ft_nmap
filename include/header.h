@@ -16,7 +16,6 @@
 
 void getargs(const int ac, char** const av);
 void sigexit(const int sig);
-byte setup_escape();
 byte bye();
 
 #endif

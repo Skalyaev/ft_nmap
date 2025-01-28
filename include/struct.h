@@ -16,8 +16,8 @@ typedef struct opt {
     bool maimon_scan;
     bool udp_scan;
     bool os_detect;
-    bool escape;
-    bool ninja;
+    bool firewall;
+    bool ids;
 } t_opt;
 
 typedef struct nmap {
