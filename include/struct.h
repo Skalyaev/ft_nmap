@@ -2,6 +2,8 @@
 #define STRUCT_H
 
 typedef struct opt {
+    ushort hosts;
+    ushort ports;
     ubyte threads;
     bool resolve;
     bool syn_scan;

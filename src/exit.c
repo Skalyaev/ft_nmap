@@ -4,11 +4,8 @@ extern t_nmap data;
 
 byte bye() {
 
-    for(ubyte x = 0; x < data.opt.threads; x++) {
-
-        if(!data.threads[x]) break;
-        free(data.threads[x]);
-    }
+    for(ushort x = 0; data.hosts[x]; x++) free(data.hosts[x]);
+    if(*data.threads) free(*data.threads);
     return data.code;
 }
 
