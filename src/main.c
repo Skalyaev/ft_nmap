@@ -19,7 +19,6 @@ int main(const int ac, char** const av) {
 
     setlocale(LC_ALL, "");
     getargs(ac, av);
-    tmp_print();
 
     const size_t size = data.opt.threads * PTHREAD_T_SIZE;
     void* buffer = malloc(size);
