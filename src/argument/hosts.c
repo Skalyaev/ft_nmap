@@ -2,7 +2,7 @@
 
 extern t_nmap data;
 
-byte new_hosts(const char opt, char* const optarg, char** const av) {
+byte new_hosts(const char opt, char* const optarg) {
 
     char** const buffer = opt == 'f' ? read_file(optarg) : read_arg(optarg);
     if(!buffer) return EXIT_FAILURE;
@@ -14,7 +14,7 @@ byte new_hosts(const char opt, char* const optarg, char** const av) {
 
         if(idx >= MAX_HOSTS) {
 
-            fprintf(stderr, "%s: too many hosts specified\n", av[0]);
+            fprintf(stderr, "Error: too many hosts specified\n");
             failed = YES;
             break;
         }

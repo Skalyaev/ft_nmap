@@ -15,7 +15,7 @@ void default_scans() {
     data.opt.udp_scan = YES;
 }
 
-byte new_scans(char* const optarg, char** const av) {
+byte new_scans(char* const optarg) {
 
     char** const buffer = read_arg(optarg);
     if(!buffer) return EXIT_FAILURE;
@@ -33,7 +33,7 @@ byte new_scans(char* const optarg, char** const av) {
         else if(!strcmp(buffer[x], "MAIMON")) data.opt.maimon_scan = YES;
         else if(!strcmp(buffer[x], "UDP")) data.opt.udp_scan = YES;
         else {
-            fprintf(stderr, "%s: unknown scan type '%s'\n", av[0], buffer[x]);
+            fprintf(stderr, "Error: unknown scan type '%s'\n", buffer[x]);
             failed = YES;
             break;
         }

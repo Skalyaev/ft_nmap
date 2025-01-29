@@ -90,7 +90,7 @@ static ushort* read_ports(char* const arg) {
     return NULL;
 }
 
-byte new_ports(char* const optarg, char** const av) {
+byte new_ports(char* const optarg) {
 
     ushort* const buffer = read_ports(optarg);
     if(!buffer) return EXIT_FAILURE;
@@ -102,7 +102,7 @@ byte new_ports(char* const optarg, char** const av) {
 
         if(idx >= MAX_PORTS) {
 
-            fprintf(stderr, "%s: too many ports specified\n", av[0]);
+            fprintf(stderr, "Error: too many ports specified\n");
             failed = YES;
             break;
         }

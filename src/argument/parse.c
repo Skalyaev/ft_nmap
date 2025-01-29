@@ -2,24 +2,23 @@
 
 extern t_nmap data;
 
-static byte switchopt(const int opt, char* const optarg,
-                      char** const av,
+static byte switchopt(const int opt, char* const optarg, char** const av,
                       bool* const use_default_scans,
                       bool* const use_default_ports) {
     switch(opt) {
     case 'i':
     case 'f':
-        if(new_hosts(opt, optarg, av) == EXIT_FAILURE) return EXIT_FAILURE;
+        if(new_hosts(opt, optarg) == EXIT_FAILURE) return EXIT_FAILURE;
         break;
     case 'd':
         data.opt.resolve = YES;
         break;
     case 's':
-        if(new_scans(optarg, av) == EXIT_FAILURE) return EXIT_FAILURE;
+        if(new_scans(optarg) == EXIT_FAILURE) return EXIT_FAILURE;
         *use_default_scans = NO;
         break;
     case 'p':
-        if(new_ports(optarg, av) == EXIT_FAILURE) return EXIT_FAILURE;
+        if(new_ports(optarg) == EXIT_FAILURE) return EXIT_FAILURE;
         *use_default_ports = NO;
         break;
     case 'o':
@@ -29,7 +28,7 @@ static byte switchopt(const int opt, char* const optarg,
         data.opt.threads = atoi(optarg);
         if(data.opt.threads) break;
 
-        fprintf(stderr, "%s: invalid number of threads '%s'\n", av[0], optarg);
+        fprintf(stderr, "Error: invalid number of threads '%s'\n", optarg);
         return EXIT_FAILURE;
     case 'F':
         data.opt.firewall = YES;
