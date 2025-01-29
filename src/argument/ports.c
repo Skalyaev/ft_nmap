@@ -63,6 +63,8 @@ static ushort* read_ports(char* const arg) {
         perror("malloc");
         return NULL;
     }
+    memset(ports, 0, BUFFER_SIZE * SHORT_SIZE);
+
     ushort size = 0;
     for(ushort x = 0; buffer[x]; x++) size++;
 
@@ -100,7 +102,7 @@ byte new_ports(char* const optarg) {
     bool duplicate;
     for(ushort x = 0; buffer[x]; x++) {
 
-        if(idx >= MAX_PORTS) {
+        if(idx == MAX_PORTS - 1) {
 
             fprintf(stderr, "Error: too many ports specified\n");
             failed = YES;

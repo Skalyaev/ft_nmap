@@ -26,14 +26,14 @@ t_socket new_socket(const char* const host, const ushort port,
         perror("socket(AF_INET, SOCK_RAW)");
         return sock;
     }
-    //int flag = 1;
-    //if(setsockopt(sock.fd, IPPROTO_IP, IP_HDRINCL, &flag, INT_SIZE) == -1) {
+    int flag = 1;
+    if(setsockopt(sock.fd, IPPROTO_IP, IP_HDRINCL, &flag, INT_SIZE) == -1) {
 
-    //    perror("setsockopt(IP_HDRINCL)");
-    //    close(sock.fd);
-    //    sock.fd = -1;
-    //    return sock;
-    //}
+        perror("setsockopt(IP_HDRINCL)");
+        close(sock.fd);
+        sock.fd = -1;
+        return sock;
+    }
     if(setsockopt(sock.fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, T_TIMEVAL_SIZE) == -1) {
 
         perror("setsockopt(SO_RCVTIMEO)");

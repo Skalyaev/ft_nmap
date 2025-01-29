@@ -12,7 +12,7 @@ byte new_hosts(const char opt, char* const optarg) {
     bool duplicate;
     for(ushort x = 0; buffer[x]; x++) {
 
-        if(idx >= MAX_HOSTS) {
+        if(idx == MAX_HOSTS - 1) {
 
             fprintf(stderr, "Error: too many hosts specified\n");
             failed = YES;
