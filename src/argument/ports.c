@@ -15,10 +15,10 @@ void default_ports() {
     data.opt.ports = ports_size / SHORT_SIZE;
 }
 
-static byte read_range(char** const buffer, ushort* const ports,
+static byte read_range(char* const buffer, ushort* const ports,
                        const ushort size) {
 
-    char* token = strtok(buffer[x], "-");
+    char* token = strtok(buffer, "-");
     if(!token) {
 
         fprintf(stderr, "Error: invalid port range\n");
@@ -78,7 +78,7 @@ static ushort* read_ports(char* const arg) {
             failed = YES;
             break;
         }
-        if(read_range(buffer, ports, size) == EXIT_SUCCESS) continue;
+        if(read_range(buffer[x], ports, size) == EXIT_SUCCESS) continue;
         failed = YES;
         break;
     }

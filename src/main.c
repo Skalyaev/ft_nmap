@@ -6,6 +6,9 @@ static void* worker() {
 
     while(YES) {
 
+        const char* flags[] = {"SYN", NULL};
+        tcp_probe(data.hosts[0], data.ports[0], flags);
+        break;
         usleep(100000);
         // Try OS detection
         // Else Try port scanning

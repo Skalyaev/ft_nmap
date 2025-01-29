@@ -1,9 +1,9 @@
-#include "../include/header.h"
+#include "../../include/header.h"
 
 extern t_nmap data;
 
-void ip_hdr(t_iphdr* const hdr, const uint8_t protocol,
-            const uint32_t saddr, const uint32_t daddr) {
+void ip_hdr(t_iphdr* const hdr, const ubyte protocol,
+            const uint saddr, const uint daddr) {
 
     hdr->ihl = 5;
     hdr->version = 4;
@@ -15,7 +15,7 @@ void ip_hdr(t_iphdr* const hdr, const uint8_t protocol,
     hdr->id = htons(rand());
 }
 
-uint32_t get_host_ip() {
+uint get_host_ip() {
 
     t_ifaddrs* ifaddr;
     t_ifaddrs* ifa;
