@@ -57,11 +57,11 @@ byte tcp_probe(const char* const dst_host, const ushort dst_port,
 
     const uint32_t daddr = sock.addr.sin_addr.s_addr;
     ip_hdr(iphdr, IPPROTO_TCP, data.self.addr, daddr);
-    // TODO: if idf -> decoys
+    // TODO: if ids -> decoys
 
     const ubyte idx = src_port_idx % src_ports_size;
     tcp_hdr(tcphdr, flags, src_ports[idx], dst_port);
-    if(data.opt.firewall) src_port_idx++;
+    // TODO: if firewall -> try different ports
 
     byte* const data = payload + T_IPHDR_SIZE + T_TCPHDR_SIZE;
     for(ubyte x = 0; x < data_size; x++) data[x] = rand() % CHAR_MAX;

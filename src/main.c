@@ -21,7 +21,7 @@ int main(const int ac, char** const av) {
     getargs(ac, av);
     srand(time(NULL));
 
-    data.self.addr = gethostip();
+    data.self.addr = get_host_ip();
     if(!data.self.addr) return bye();
 
     for(ubyte x = 0; x < data.opt.threads; x++) {

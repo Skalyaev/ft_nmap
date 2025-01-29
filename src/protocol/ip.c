@@ -15,7 +15,7 @@ void ip_hdr(t_iphdr* const hdr, const uint8_t protocol,
     hdr->id = htons(rand());
 }
 
-uint32_t gethostip() {
+uint32_t get_host_ip() {
 
     t_ifaddrs* ifaddr;
     t_ifaddrs* ifa;
