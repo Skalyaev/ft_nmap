@@ -20,15 +20,27 @@ typedef struct opt {
     bool ids;
 } t_opt;
 
+typedef struct self {
+    uint32_t addr;
+} t_self;
+
+typedef struct socket {
+    int fd;
+    t_sockaddr_in addr;
+} t_socket;
+
 typedef struct nmap {
     t_opt opt;
     byte code;
-    pthread_t* threads[MAX_THREADS];
+    t_self self;
+    pthread_t threads[MAX_THREADS];
     char* hosts[MAX_HOSTS];
     ushort ports[MAX_PORTS];
 } t_nmap;
 
 #define OPT_SIZE sizeof(t_opt)
+#define SELF_SIZE sizeof(t_self)
+#define T_SOCK_SIZE sizeof(t_socket)
 #define NMAP_SIZE sizeof(t_nmap)
 #define PTHREAD_T_SIZE sizeof(pthread_t)
 

@@ -20,7 +20,8 @@
 
 - [ ] Host Discovery
 
-  - [ ] `WORK IN PROGRESS`
+  - [ ] ICMP Echo probes
+  - [ ] TCP SYN/CONECT probes
 
 - [ ] Port Scanning
 
@@ -42,15 +43,11 @@
 
   - [ ] `WORK IN PROGRESS`
 
-- [ ] Firewall care
+- [ ] Firewall/IDS care
 
   - [ ] Fragmentation
   - [ ] Source port manipulation
-  - [ ] MAC address spoofing
   - [ ] Fake RST detection trial
-
-- [ ] IDS care
-
   - [ ] Decoys
   - [ ] Timing
 
