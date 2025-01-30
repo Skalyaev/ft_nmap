@@ -2,22 +2,25 @@
 
 extern t_nmap data;
 
-ushort checksum(const ushort* ptr, const ubyte nbytes) {
+uint16_t checksum(const uint16_t* ptr, const uint16_t size) {
 
-    uint sum = 0;
-    ushort count = nbytes >> 1;
+    uint32_t sum = 0;
+    uint16_t count = size >> 1;
 
     while(count--) sum += *ptr++;
-    if(nbytes & 1) sum += *(ubyte*)ptr;
+    if(size & 1) sum += *(uint8_t*)ptr;
 
     while(sum >> 16) sum = (sum & 0xFFFF) + (sum >> 16);
     return ~sum;
 }
 
-t_socket new_socket(const char* const host, const ushort port,
+t_socket new_socket(const char* const dst_host,
+                    const uint16_t dst_port,
                     const int protocol) {
 
     static const t_timeval timeout = {0, REQ_TIMEOUT};
+    static const int ip_hdrincl = 1;
+
     t_socket sock = {0};
 
     sock.fd = socket(AF_INET, SOCK_RAW, protocol);
@@ -26,81 +29,89 @@ t_socket new_socket(const char* const host, const ushort port,
         perror("socket(AF_INET, SOCK_RAW)");
         return sock;
     }
-    int flag = 1;
-    if(setsockopt(sock.fd, IPPROTO_IP, IP_HDRINCL, &flag, INT_SIZE) == -1) {
-
-        perror("setsockopt(IP_HDRINCL)");
-        close(sock.fd);
-        sock.fd = -1;
-        return sock;
-    }
-    if(setsockopt(sock.fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, T_TIMEVAL_SIZE) == -1) {
+    if(setsockopt(sock.fd, SOL_SOCKET, SO_RCVTIMEO,
+                  &timeout, T_TIMEVAL_SIZE) == -1) {
 
         perror("setsockopt(SO_RCVTIMEO)");
         close(sock.fd);
         sock.fd = -1;
         return sock;
     }
+    if(setsockopt(sock.fd, IPPROTO_IP, IP_HDRINCL,
+                  &ip_hdrincl, INT_SIZE) == -1) {
+
+        perror("setsockopt(IP_HDRINCL)");
+        close(sock.fd);
+        sock.fd = -1;
+        return sock;
+    }
     sock.addr.sin_family = AF_INET;
-    sock.addr.sin_port = htons(port);
-    sock.addr.sin_addr.s_addr = inet_addr(host);
+    sock.addr.sin_port = htons(dst_port);
+    sock.addr.sin_addr.s_addr = inet_addr(dst_host);
     return sock;
 }
 
 static void* send_probe(t_send* const av) {
 
+    usleep(FRAGMENT_INTERVAL);
+    uint16_t fragment_size = av->size;
+    uint8_t fragment_count = 1;
     bool decoy = NO;
-    ushort fragment_size = av->size;
-    ubyte fragment_count = 1;
 
-    if(data.opt.firewall || data.opt.ids) {
+    if(data.opt.flags & FIREWALL_CARE || data.opt.flags & IDS_CARE) {
 
-        if(data.opt.ids) decoy = YES;
         fragment_size = 8;
         fragment_count = av->size / fragment_size;
         if(av->size % fragment_size) fragment_count++;
+
+        if(data.opt.flags & IDS_CARE) decoy = YES;
     }
-    (void)decoy;
-    // TODO: decoy
-    const ubyte iphdr_size = av->iphdr->ihl << 2;
-    const ubyte send_size = iphdr_size + fragment_size;
+    (void)decoy; // TODO: decoy
 
-    byte send_buff[send_size];
-    memset(send_buff, 0, send_size);
-    memcpy(send_buff, av->iphdr, iphdr_size);
+    const uint16_t iphdr_size = av->iphdr->ihl << 2;
+    const uint16_t send_size = iphdr_size + fragment_size;
 
-    t_iphdr* ptr = (t_iphdr*)send_buff;
-    ptr->tot_len = htons(send_size);
+    int8_t payload[send_size];
+    memset(payload, 0, send_size);
+    memcpy(payload, av->iphdr, iphdr_size);
 
-    ushort offset;
-    for(ubyte x = 0; x < fragment_count; x++) {
+    t_iphdr* const iphdr = (t_iphdr*)payload;
+    iphdr->tot_len = htons(send_size);
+
+    int8_t* const body = payload + iphdr_size;
+    const int8_t* const src = av->buffer + iphdr_size;
+
+    const t_sockaddr* const addr = (t_sockaddr*)&av->sock->addr;
+
+    uint16_t offset;
+    for(uint8_t x = 0; x < fragment_count; x++) {
 
         offset = x * fragment_size;
-        ptr->frag_off = htons(offset >> 3);
-        if(x < fragment_count - 1) ptr->frag_off |= htons(IP_MF);
+        iphdr->frag_off = htons(offset >> 3);
 
-        ptr->check = checksum((ushort*)send_buff, iphdr_size);
-        memcpy(send_buff + iphdr_size,
-               av->payload + offset + iphdr_size, fragment_size);
+        if(x < fragment_count - 1) iphdr->frag_off |= htons(IP_MF);
 
-        if(sendto(av->sock->fd, send_buff, send_size, 0,
-                  (t_sockaddr*)&av->sock->addr, T_SOCKADDR_IN_SIZE) == -1) {
+        iphdr->check = checksum((uint16_t*)payload, iphdr_size);
+        memcpy(body, src + offset, fragment_size);
+
+        if(sendto(av->sock->fd, payload, send_size,
+                  0, addr, T_SOCKADDR_SIZE) == -1) {
 
             perror("sendto");
-            return NULL;
+            break;
         }
-        if(x < fragment_count - 1) usleep(100000);
+        if(x < fragment_count - 1) usleep(FRAGMENT_INTERVAL);
     }
     return NULL;
 }
 
-byte new_probe(t_socket* const sock,
-               t_iphdr* const iphdr,
-               const ushort size,
-               byte* const payload,
-               byte* const recv_buff) {
+int8_t new_probe(t_socket* const sock,
+                 t_iphdr* const iphdr,
+                 const uint16_t send_size,
+                 int8_t* const send_buff,
+                 int8_t* const recv_buff) {
 
-    t_send av = {sock, iphdr, size, payload};
+    t_send av = {sock, iphdr, send_buff, send_size};
     pthread_t thread;
     if(pthread_create(&thread, NULL, (void*(*)(void*))send_probe, &av) != 0) {
 
@@ -110,6 +121,7 @@ byte new_probe(t_socket* const sock,
     if(recv(sock->fd, recv_buff, BUFFER_SIZE, 0) == -1) {
 
         perror("recv");
+        pthread_join(thread, NULL);
         return EXIT_FAILURE;
     }
     pthread_join(thread, NULL);

@@ -6,10 +6,8 @@ static void* worker() {
 
     while(YES) {
 
-        const char* flags[] = {"SYN", NULL};
-        tcp_probe(data.hosts[0], data.ports[0], flags);
-        break;
-        usleep(100000);
+        usleep(data.opt.sleep_time);
+        tcp_probe(data.hosts[0], data.ports[0], TH_SYN);
         // Try OS detection
         // Else Try port scanning
         // Else Try host discovery
@@ -20,27 +18,26 @@ static void* worker() {
 
 int main(const int ac, char** const av) {
 
-    setlocale(LC_ALL, "");
-    getargs(ac, av);
     srand(time(NULL));
+    setlocale(LC_ALL, "");
+    get_args(ac, av);
 
-    data.self.addr = get_host_ip();
-    if(!data.self.addr) return bye();
+    data.opt.src_ip = get_host_ip();
+    if(!data.opt.src_ip) return bye();
 
-    for(ubyte x = 0; x < data.opt.threads; x++) {
+    for(uint8_t x = 0; x < data.opt.thread_count; x++) {
 
         if(pthread_create(&data.threads[x], NULL, worker, NULL) == 0)
             continue;
 
-        data.code = errno;
         perror("pthread_create");
-        sigexit(data.code);
+        sigexit(errno);
     }
     signal(SIGINT, sigexit);
     signal(SIGQUIT, sigexit);
     signal(SIGTERM, sigexit);
 
-    for(ubyte x = 0; x < data.opt.threads; x++)
+    for(uint8_t x = 0; x < data.opt.thread_count; x++)
         pthread_join(data.threads[x], NULL);
 
     return bye();

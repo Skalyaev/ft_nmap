@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>
@@ -13,49 +14,75 @@
 #include <signal.h>
 #include <errno.h>
 
-#include <sys/socket.h>
-#include <net/if.h>
-#include <netinet/in.h>
-#include <netinet/ip.h>
-#include <netinet/tcp.h>
-#include <netinet/udp.h>
-#include <netinet/ip_icmp.h>
 #include <arpa/inet.h>
+#include <net/if.h>
+#include <netinet/ip_icmp.h>
+#include <netinet/tcp.h>
 
 #include "define.h"
 #include "struct.h"
 
-void getargs(const int ac, char** const av);
+// argument/usage.c
+// ================
 const char* usage();
 
-char** read_arg(char* const optarg);
-char** read_file(const char* const file);
+// argument/parse.c
+// ================
+void get_args(const int ac, char** const av);
 
-byte new_hosts(const char opt, char* const optarg);
-byte new_ports(char* const optarg);
-byte new_scans(char* const optarg);
+// argument/read.c
+// ===============
+char** read_arg(char* const arg);
 
+char** read_file(const char* const path);
+
+// argument/host.c
+// ===============
+int8_t new_hosts(const char opt, char* const arg);
+
+// argument/ports.c
+// ================
 void default_ports();
+
+int8_t new_ports(char* const arg);
+
+// argument/scans.c
+// ================
 void default_scans();
 
-uint get_host_ip();
-void ip_hdr(t_iphdr* const hdr, const ubyte protocol,
-            const uint saddr, const uint daddr);
+int8_t new_scans(char* const arg);
 
-byte tcp_probe(const char* const dst_host, const ushort dst_port,
-               const char** const flags);
+// protocol/ip.c
+// =============
+uint32_t get_host_ip();
 
-ushort checksum(const ushort* ptr, const ubyte nbytes);
-t_socket new_socket(const char* const host, const ushort port,
+void ip_hdr(t_iphdr* const hdr,
+            const uint8_t protocol,
+            const uint32_t src_ip,
+            const uint32_t dst_ip);
+
+// protocol/tcp.c
+// ==============
+int8_t tcp_probe(const char* const dst_host,
+                 const uint16_t dst_port,
+                 const uint8_t flags);
+// socket.c
+// ========
+uint16_t checksum(const uint16_t* ptr, const uint16_t size);
+
+t_socket new_socket(const char* const dst_host,
+                    const uint16_t dst_port,
                     const int protocol);
 
-byte new_probe(t_socket* const sock,
-               t_iphdr* const iphdr,
-               const ushort size,
-               byte* const payload,
-               byte* const recv_buff);
-
+int8_t new_probe(t_socket* const sock,
+                 t_iphdr* const iphdr,
+                 const uint16_t send_size,
+                 int8_t* const send_buff,
+                 int8_t* const recv_buff);
+// exit.c
+// ======
 void sigexit(const int sig);
-byte bye();
+
+int8_t bye();
 
 #endif

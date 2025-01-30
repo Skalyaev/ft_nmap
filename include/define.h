@@ -1,32 +1,26 @@
 #ifndef DEFINE_H
 #define DEFINE_H
 
-#define MAX_THREADS 250
 #define MAX_HOSTS 512
 #define MAX_PORTS 1024
+#define MAX_THREADS 250
 
 #define BUFFER_SIZE 1024
 
-#define MIN_DATA_SIZE 4
-#define MAX_DATA_SIZE 42
-#define RANGE_DATA_SIZE (MAX_DATA_SIZE - MIN_DATA_SIZE)
+#define MIN_BODY_SIZE 4
+#define MAX_BODY_SIZE 42
+#define RANGE_BODY_SIZE (MAX_BODY_SIZE - MIN_BODY_SIZE)
 
+#define DEFAULT_SLEEP_TIME 0.8 * 1000000
+#define FRAGMENT_INTERVAL 0.1 * 1000000
 #define REQ_TIMEOUT 0.8 * 1000000
-#define REQ_RETRIES 3
+#define REQ_RETRIES 4
 
 #define EXIT_SUCCESS 0
 #define EXIT_FAILURE 1
 
 #define YES 1
 #define NO 0
-
-typedef char byte;
-typedef unsigned char ubyte;
-typedef unsigned char bool;
-typedef unsigned char uchar;
-typedef unsigned short ushort;
-typedef unsigned int uint;
-typedef unsigned long ulong;
 
 typedef struct option t_option;
 typedef struct ifaddrs t_ifaddrs;
@@ -38,15 +32,6 @@ typedef struct iphdr t_iphdr;
 typedef struct icmphdr t_icmphdr;
 typedef struct udphdr t_udphdr;
 typedef struct tcphdr t_tcphdr;
-
-#define BYTE_SIZE sizeof(byte)
-#define SHORT_SIZE sizeof(short)
-#define INT_SIZE sizeof(int)
-#define LONG_SIZE sizeof(long)
-#define SIZE_T_SIZE sizeof(size_t)
-#define FLOAT_SIZE sizeof(float)
-#define DOUBLE_SIZE sizeof(double)
-#define PTR_SIZE sizeof(void*)
 
 #define T_OPTION_SIZE sizeof(t_option)
 #define T_IFADDRS_SIZE sizeof(t_ifaddrs)
@@ -60,6 +45,20 @@ typedef struct tcphdr t_tcphdr;
 #define T_TCPHDR_SIZE sizeof(t_tcphdr)
 #define PTHREAD_T_SIZE sizeof(pthread_t)
 
+#define BYTE_SIZE sizeof(char)
+#define SHORT_SIZE sizeof(short)
+#define INT_SIZE sizeof(int)
+#define LONG_SIZE sizeof(long)
+#define SIZE_T_SIZE sizeof(size_t)
+#define FLOAT_SIZE sizeof(float)
+#define DOUBLE_SIZE sizeof(double)
+#define PTR_SIZE sizeof(void*)
+
+#define INT8_SIZE sizeof(int8_t)
+#define INT16_SIZE sizeof(int16_t)
+#define INT32_SIZE sizeof(int32_t)
+#define INT64_SIZE sizeof(int64_t)
+
 #define RED "\033[0;31m"
 #define GREEN "\033[0;32m"
 #define YELLOW "\033[0;33m"
@@ -68,5 +67,11 @@ typedef struct tcphdr t_tcphdr;
 #define CYAN "\033[0;36m"
 #define WHITE "\033[0;37m"
 #define RESET "\033[0m"
+
+#define BOLD "\033[1m"
+#define DIM "\033[2m"
+#define ITALIC "\033[3m"
+#define UNDERLINE "\033[4m"
+#define BLINK "\033[5m"
 
 #endif

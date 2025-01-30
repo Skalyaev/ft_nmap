@@ -2,44 +2,48 @@
 
 extern t_nmap data;
 
-static byte switchopt(const int opt, char* const optarg, char** const av,
-                      bool* const use_default_scans,
-                      bool* const use_default_ports) {
+static int8_t switch_opt(const int opt,
+                         char* const arg,
+                         char** const av,
+                         bool* const use_default_scans,
+                         bool* const use_default_ports) {
     switch(opt) {
     case 'i':
     case 'f':
-        if(new_hosts(opt, optarg) == EXIT_FAILURE) return EXIT_FAILURE;
+        if(new_hosts(opt, arg) == EXIT_FAILURE) return EXIT_FAILURE;
         break;
     case 'd':
-        data.opt.resolve = YES;
+        data.opt.flags |= RESOLVE;
         break;
     case 's':
-        if(new_scans(optarg) == EXIT_FAILURE) return EXIT_FAILURE;
+        if(new_scans(arg) == EXIT_FAILURE) return EXIT_FAILURE;
         *use_default_scans = NO;
         break;
     case 'p':
-        if(new_ports(optarg) == EXIT_FAILURE) return EXIT_FAILURE;
+        if(new_ports(arg) == EXIT_FAILURE) return EXIT_FAILURE;
         *use_default_ports = NO;
         break;
     case 'o':
-        data.opt.os_detect = YES;
+        data.opt.flags |= OS_DETECT;
         break;
     case 't':
-        data.opt.threads = atoi(optarg);
-        if(data.opt.threads) break;
+        data.opt.thread_count = atoi(arg);
+        if(data.opt.thread_count && data.opt.thread_count <= MAX_THREADS) break;
 
-        fprintf(stderr, "Error: invalid number of threads '%s'\n", optarg);
+        fprintf(stderr, "Error: invalid number of threads '%s'\n", arg);
         return EXIT_FAILURE;
     case 'F':
-        data.opt.firewall = YES;
+        data.opt.flags |= FIREWALL_CARE;
+        data.opt.sleep_time = DEFAULT_SLEEP_TIME * 4;
         break;
     case 'I':
-        data.opt.ids = YES;
+        data.opt.flags |= IDS_CARE;
+        data.opt.sleep_time = DEFAULT_SLEEP_TIME * 4;
         break;
     case 'h':
         printf(usage(), av[0]);
 
-        for(ushort x = 0; data.hosts[x]; x++) free(data.hosts[x]);
+        for(uint16_t x = 0; data.hosts[x]; x++) free(data.hosts[x]);
         exit(EXIT_SUCCESS);
     default:
         fprintf(stderr, "try '%s -h' for more information\n", av[0]);
@@ -48,9 +52,10 @@ static byte switchopt(const int opt, char* const optarg, char** const av,
     return EXIT_SUCCESS;
 }
 
-void getargs(const int ac, char** const av) {
+void get_args(const int ac, char** const av) {
 
-    data.opt.threads = 1;
+    data.opt.sleep_time = DEFAULT_SLEEP_TIME;
+    data.opt.thread_count = 1;
     const t_option options[] = {
 
         {"ip", required_argument, 0, 'i'},
@@ -65,7 +70,7 @@ void getargs(const int ac, char** const av) {
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
-    const char* const optstring = "i:f:s:p:t:doenh";
+    const char* const optstring = "i:f:s:p:t:doFIh";
 
     bool use_default_scans = YES;
     bool use_default_ports = YES;
@@ -75,15 +80,15 @@ void getargs(const int ac, char** const av) {
     int opt;
     while((opt = getopt_long(ac, av, optstring, options, &idx)) != -1) {
 
-        if(switchopt(opt, optarg, av,
-                     &use_default_scans,
-                     &use_default_ports) == EXIT_SUCCESS) continue;
+        if(switch_opt(opt, optarg, av,
+                      &use_default_scans,
+                      &use_default_ports) == EXIT_SUCCESS) continue;
         failed = YES;
         break;
     }
     if(failed) {
 
-        for(ushort x = 0; data.hosts[x]; x++) free(data.hosts[x]);
+        for(uint16_t x = 0; data.hosts[x]; x++) free(data.hosts[x]);
         exit(EXIT_FAILURE);
     }
     if(data.hosts[0]) {

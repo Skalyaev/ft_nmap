@@ -2,10 +2,9 @@
 
 extern t_nmap data;
 
-byte bye() {
+int8_t bye() {
 
-    for(ushort x = 0; data.hosts[x]; x++)
-        free(data.hosts[x]);
+    for(uint16_t x = 0; data.hosts[x]; x++) free(data.hosts[x]);
     return data.code;
 }
 
@@ -15,12 +14,12 @@ void sigexit(const int sig) {
     if(exiting) return;
     else exiting = YES;
 
-    for(ubyte x = 0; x < data.opt.threads; x++) {
+    for(uint8_t x = 0; x < data.opt.thread_count; x++) {
 
         if(!data.threads[x]) break;
         pthread_cancel(data.threads[x]);
     }
-    for(ubyte x = 0; x < data.opt.threads; x++) {
+    for(uint8_t x = 0; x < data.opt.thread_count; x++) {
 
         if(!data.threads[x]) break;
         pthread_join(data.threads[x], NULL);
