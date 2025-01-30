@@ -14,6 +14,8 @@
 #include <signal.h>
 #include <errno.h>
 
+#include <linux/filter.h>
+#include <linux/bpf.h>
 #include <arpa/inet.h>
 #include <net/if.h>
 #include <netinet/ip_icmp.h>
@@ -77,8 +79,8 @@ t_socket new_socket(const char* const dst_host,
 int8_t new_probe(t_socket* const sock,
                  t_iphdr* const iphdr,
                  const uint16_t send_size,
-                 int8_t* const send_buff,
-                 int8_t* const recv_buff);
+                 uint8_t* const send_buff,
+                 uint8_t* const recv_buff);
 // exit.c
 // ======
 void sigexit(const int sig);

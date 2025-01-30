@@ -1,3 +1,4 @@
+SHELL:=/bin/bash
 NAME=ft_nmap
 
 CC=gcc
@@ -36,4 +37,13 @@ fclean: clean
 
 re: fclean all
 
-.PHONY: all clean fclean re
+lab:
+	cd lab && $(MAKE)
+
+lab-down:
+	cd lab && $(MAKE) down
+
+lab-clean: lab-down
+	cd lab && $(MAKE) clean
+
+.PHONY: all clean fclean re lab lab-down lab-clean

@@ -1,0 +1,31 @@
+server {
+    listen ${HTTP_PORT};
+    listen [::]:${HTTP_PORT};
+
+    return 301 https://$host$request_uri;
+}
+server {
+    listen [::]:${HTTPS_PORT} ssl ipv6only=on;
+    listen ${HTTPS_PORT} ssl;
+
+    include /etc/nginx/ssl/ssl.conf;
+    ssl_dhparam /etc/nginx/ssl/dhparams.pem;
+
+    ssl_certificate /etc/nginx/ssl/crt/${SSL_CERT}.crt;
+    ssl_certificate_key /etc/nginx/ssl/crt/${SSL_CERT}.key;
+
+    location /api {
+        proxy_pass http://${HOST_BACK}:${PORT_BACK};
+        proxy_http_version 1.1;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    location / {
+        proxy_pass http://${HOST_FRONT}:${PORT_FRONT};
+        proxy_http_version 1.1;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
