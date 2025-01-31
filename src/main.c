@@ -6,8 +6,8 @@ static void* worker() {
 
     while(YES) {
 
-        usleep(data.opt.sleep_time);
         tcp_probe(data.hosts[0], data.ports[0], TH_SYN);
+        usleep(data.opt.sleep_time);
         // Try OS detection
         // Else Try port scanning
         // Else Try host discovery

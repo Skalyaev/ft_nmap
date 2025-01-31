@@ -41,7 +41,6 @@ typedef struct socket {
 
 typedef struct send {
     t_socket* sock;
-    t_iphdr* iphdr;
     uint8_t* buffer;
     uint16_t size;
 } t_send;

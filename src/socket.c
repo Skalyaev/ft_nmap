@@ -2,10 +2,10 @@
 
 extern t_nmap data;
 
-uint16_t checksum(const uint16_t* ptr, const uint16_t size) {
+uint16_t checksum(const uint16_t* ptr, const uint8_t size) {
 
     uint32_t sum = 0;
-    uint16_t count = size >> 1;
+    uint8_t count = size >> 1;
 
     while(count--) sum += *ptr++;
     if(size & 1) sum += *(uint8_t*)ptr;
@@ -34,7 +34,7 @@ t_socket new_socket(const char* const dst_host,
                     const uint16_t dst_port,
                     const int protocol) {
 
-    static const t_timeval timeout = {2, REQ_TIMEOUT};
+    static const t_timeval timeout = {0, REQ_TIMEOUT};
     static const int ip_hdrincl = 1;
 
     t_socket sock = {0};
@@ -64,6 +64,7 @@ t_socket new_socket(const char* const dst_host,
     sock.addr.sin_family = AF_INET;
     sock.addr.sin_port = htons(dst_port);
     sock.addr.sin_addr.s_addr = inet_addr(dst_host);
+
     if(ip_filter(sock.fd, sock.addr.sin_addr.s_addr) == -1) {
 
         perror("setsockopt(SO_ATTACH_FILTER)");
@@ -78,26 +79,27 @@ static void* send_probe(t_send* const av) {
 
     usleep(FRAGMENT_INTERVAL);
 
-    uint16_t fragment_size = av->size;
+    uint8_t fragment_size = av->size;
     uint8_t fragment_count = 1;
     bool decoy = NO;
 
     if(data.opt.flags & FIREWALL_CARE || data.opt.flags & IDS_CARE) {
 
-        fragment_size = 8;
+        fragment_size = FRAGMENT_SIZE;
         fragment_count = av->size / fragment_size;
         if(av->size % fragment_size) fragment_count++;
 
         if(data.opt.flags & IDS_CARE) decoy = YES;
     }
     (void)decoy; // TODO: decoys
+    const t_iphdr* const src_iphdr = (t_iphdr*)av->buffer;
 
-    const uint16_t iphdr_size = av->iphdr->ihl << 2;
-    const uint16_t send_size = iphdr_size + fragment_size;
+    const uint8_t iphdr_size = src_iphdr->ihl << 2;
+    const uint8_t send_size = iphdr_size + fragment_size;
 
     uint8_t payload[send_size];
     memset(payload, 0, send_size);
-    memcpy(payload, av->iphdr, iphdr_size);
+    memcpy(payload, src_iphdr, iphdr_size);
 
     t_iphdr* const iphdr = (t_iphdr*)payload;
     iphdr->tot_len = htons(send_size);
@@ -107,7 +109,7 @@ static void* send_probe(t_send* const av) {
     const t_sockaddr* const addr = (t_sockaddr*)&av->sock->addr;
     const uint8_t* const src = av->buffer + iphdr_size;
 
-    uint16_t offset;
+    uint8_t offset;
     for(uint8_t x = 0; x < fragment_count; x++) {
 
         offset = x * fragment_size;
@@ -124,18 +126,18 @@ static void* send_probe(t_send* const av) {
             perror("sendto");
             break;
         }
+        printf("Sent %d bytes\n", send_size);
         if(x < fragment_count - 1) usleep(FRAGMENT_INTERVAL);
     }
     return NULL;
 }
 
 int8_t new_probe(t_socket* const sock,
-                 t_iphdr* const iphdr,
-                 const uint16_t send_size,
+                 const uint8_t send_size,
                  uint8_t* const send_buff,
                  uint8_t* const recv_buff) {
 
-    t_send av = {sock, iphdr, send_buff, send_size};
+    t_send av = {sock, send_buff, send_size};
     pthread_t thread;
     if(pthread_create(&thread, NULL, (void*(*)(void*))send_probe, &av) != 0) {
 
@@ -144,7 +146,7 @@ int8_t new_probe(t_socket* const sock,
     }
     if(recv(sock->fd, recv_buff, BUFFER_SIZE, 0) == -1) {
 
-        perror("recv");
+        if(errno == EAGAIN) return EXIT_SUCCESS;
         pthread_join(thread, NULL);
         return EXIT_FAILURE;
     }

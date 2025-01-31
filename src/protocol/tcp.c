@@ -30,7 +30,7 @@ static void tcp_checksum(t_iphdr* const iphdr,
     pseudo_iphdr.len = htons(T_TCPHDR_SIZE + body_size);
 
     uint8_t buffer[BUFFER_SIZE] = {0};
-    uint16_t size = T_PSEUDO_IPHDR_SIZE;
+    uint8_t size = T_PSEUDO_IPHDR_SIZE;
 
     memcpy(buffer, &pseudo_iphdr, size);
     memcpy(buffer + size, tcphdr, T_TCPHDR_SIZE);
@@ -41,15 +41,15 @@ static void tcp_checksum(t_iphdr* const iphdr,
     tcphdr->th_sum = checksum((uint16_t*)buffer, size);
 }
 
-void print_tcp(const uint8_t* const buffer) {
+void tcp_response(const uint8_t* const buffer) {
 
     printf(GREEN"\n"BOLD"Received TCP packet"RESET);
     printf(GREEN"\n"BOLD"===================\n"RESET);
     const t_iphdr* const iphdr = (t_iphdr*)buffer;
-    const uint16_t ip_size = iphdr->ihl << 2;
+    const uint8_t ip_size = iphdr->ihl << 2;
 
     const t_tcphdr* const tcphdr = (t_tcphdr*)(buffer + ip_size);
-    const uint16_t tcp_size = tcphdr->th_off << 2;
+    const uint8_t tcp_size = tcphdr->th_off << 2;
 
     const uint16_t size = ntohs(iphdr->tot_len);
     printf("Total Length: %d bytes\n", size);
@@ -103,13 +103,13 @@ void print_tcp(const uint8_t* const buffer) {
         printf("Empty\n\n");
         return;
     }
-    for(uint16_t x = 0; x < body_size; x++) {
+    for(uint8_t x = 0; x < body_size; x++) {
 
         if(x && x % 16 == 0) printf("\n");
         printf("%02X ", body[x]);
     }
     printf("\n");
-    for(uint16_t x = 0; x < body_size; x++) {
+    for(uint8_t x = 0; x < body_size; x++) {
 
         if(x && x % 16 == 0) printf("\n");
         if(body[x] >= 32 && body[x] <= 126) printf("%2c ", body[x]);
@@ -141,7 +141,7 @@ int8_t tcp_probe(const char* const dst_host,
     ip_hdr(iphdr, IPPROTO_TCP, src_ip, dst_ip);
 
     const uint8_t iphdr_size = iphdr->ihl << 2;
-    uint16_t size = iphdr_size + T_TCPHDR_SIZE;
+    uint8_t size = iphdr_size + T_TCPHDR_SIZE;
 
     t_tcphdr* const tcphdr = (t_tcphdr*)(send_buff + iphdr_size);
     tcp_hdr(tcphdr, flags, src_ports[src_port_idx], dst_port);
@@ -151,7 +151,7 @@ int8_t tcp_probe(const char* const dst_host,
 
     if(data.opt.flags & FIREWALL_CARE || data.opt.flags & IDS_CARE) {
 
-        body_size += MIN_BODY_SIZE + (rand() % RANGE_BODY_SIZE);
+        body_size += FRAGMENT_SIZE + 4;
         size += body_size;
     }
     for(uint8_t x = 0; x < body_size; x++) body[x] = rand() % UCHAR_MAX;
@@ -165,13 +165,14 @@ int8_t tcp_probe(const char* const dst_host,
     uint8_t recv_buff[BUFFER_SIZE] = {0};
     for(uint8_t x = 0; x < retries; x++) {
 
-        if(new_probe(&sock, iphdr, size,
-                     send_buff, recv_buff) != EXIT_SUCCESS) {
+        if(new_probe(&sock, size, send_buff, recv_buff) != EXIT_SUCCESS) {
             failed = YES;
             break;
         }
-        print_tcp(recv_buff);
-        break;
+        if(*recv_buff) {
+            tcp_response(recv_buff);
+            break;
+        }
         if(!(data.opt.flags & FIREWALL_CARE)) continue;
 
         src_port_idx++;

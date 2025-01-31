@@ -45,7 +45,7 @@
 
 - [ ] Firewall/IDS care
 
-  - [ ] Fragmentation
+  - [x] Fragmentation
   - [ ] Source port manipulation
   - [ ] Fake RST detection trial
   - [ ] Decoys
