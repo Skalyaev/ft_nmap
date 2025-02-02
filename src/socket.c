@@ -79,36 +79,32 @@ static void* send_probe(t_send* const av) {
 
     usleep(FRAGMENT_INTERVAL);
 
-    uint8_t fragment_size = av->size;
-    uint8_t fragment_count = 1;
-    bool decoy = NO;
+    t_iphdr* iphdr = (t_iphdr*)av->buffer;
+    const uint8_t iphdr_size = iphdr->ihl << 2;
 
+    uint8_t fragment_size, fragment_count, packet_size;
     if(data.opt.flags & FIREWALL_CARE || data.opt.flags & IDS_CARE) {
 
+        const uint8_t size = av->headers_size - iphdr_size + av->body_size;
+        fragment_count = size / FRAGMENT_SIZE;
+        if(size % FRAGMENT_SIZE) fragment_count++;
+
         fragment_size = FRAGMENT_SIZE;
-        fragment_count = av->size / fragment_size;
-        if(av->size % fragment_size) fragment_count++;
-
-        if(data.opt.flags & IDS_CARE) decoy = YES;
+        packet_size = iphdr_size + fragment_size;
+    } else {
+        fragment_count = 1;
+        packet_size = fragment_size = av->headers_size + av->body_size;
     }
-    (void)decoy; // TODO: decoys
-    const t_iphdr* const src_iphdr = (t_iphdr*)av->buffer;
+    uint8_t payload[BUFFER_SIZE] = {0};
+    memcpy(payload, iphdr, iphdr_size);
 
-    const uint8_t iphdr_size = src_iphdr->ihl << 2;
-    const uint8_t send_size = iphdr_size + fragment_size;
-
-    uint8_t payload[send_size];
-    memset(payload, 0, send_size);
-    memcpy(payload, src_iphdr, iphdr_size);
-
-    t_iphdr* const iphdr = (t_iphdr*)payload;
-    iphdr->tot_len = htons(send_size);
+    iphdr = (t_iphdr*)payload;
+    iphdr->tot_len = htons(packet_size);
 
     uint8_t* const body = payload + iphdr_size;
-
-    const t_sockaddr* const addr = (t_sockaddr*)&av->sock->addr;
     const uint8_t* const src = av->buffer + iphdr_size;
 
+    const t_sockaddr* const addr = (t_sockaddr*)&av->sock->addr;
     uint8_t offset;
     for(uint8_t x = 0; x < fragment_count; x++) {
 
@@ -120,24 +116,24 @@ static void* send_probe(t_send* const av) {
         iphdr->check = checksum((uint16_t*)payload, iphdr_size);
         memcpy(body, src + offset, fragment_size);
 
-        if(sendto(av->sock->fd, payload, send_size,
+        if(sendto(av->sock->fd, payload, packet_size,
                   0, addr, T_SOCKADDR_SIZE) == -1) {
 
             perror("sendto");
             break;
         }
-        printf("Sent %d bytes\n", send_size);
         if(x < fragment_count - 1) usleep(FRAGMENT_INTERVAL);
     }
     return NULL;
 }
 
 int8_t new_probe(t_socket* const sock,
-                 const uint8_t send_size,
+                 const uint8_t headers_size,
+                 const uint8_t body_size,
                  uint8_t* const send_buff,
                  uint8_t* const recv_buff) {
 
-    t_send av = {sock, send_buff, send_size};
+    t_send av = {sock, send_buff, headers_size, body_size};
     pthread_t thread;
     if(pthread_create(&thread, NULL, (void*(*)(void*))send_probe, &av) != 0) {
 

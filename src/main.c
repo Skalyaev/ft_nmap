@@ -6,7 +6,8 @@ static void* worker() {
 
     while(YES) {
 
-        tcp_probe(data.hosts[0], data.ports[0], TH_SYN);
+        uint8_t recv_buff[BUFFER_SIZE] = {0};
+        tcp_probe(data.hosts[0], data.ports[0], TH_SYN, recv_buff);
         usleep(data.opt.sleep_time);
         // Try OS detection
         // Else Try port scanning

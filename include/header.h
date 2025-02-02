@@ -67,7 +67,8 @@ void ip_hdr(t_iphdr* const hdr,
 // ==============
 int8_t tcp_probe(const char* const dst_host,
                  const uint16_t dst_port,
-                 const uint8_t flags);
+                 const uint8_t flags,
+                 uint8_t* const recv_buff);
 // socket.c
 // ========
 uint16_t checksum(const uint16_t* ptr, const uint8_t size);
@@ -77,7 +78,8 @@ t_socket new_socket(const char* const dst_host,
                     const int protocol);
 
 int8_t new_probe(t_socket* const sock,
-                 const uint8_t send_size,
+                 const uint8_t headers_size,
+                 const uint8_t body_size,
                  uint8_t* const send_buff,
                  uint8_t* const recv_buff);
 // exit.c

@@ -43,13 +43,11 @@
 
   - [ ] `WORK IN PROGRESS`
 
-- [ ] Firewall/IDS care
+- [x] Firewall/IDS care
 
   - [x] Fragmentation
-  - [ ] Source port manipulation
-  - [ ] Fake RST detection trial
-  - [ ] Decoys
-  - [ ] Timing
+  - [x] Source port manipulation
+  - [x] Timing
 
 ## Install
 
