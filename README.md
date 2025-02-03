@@ -8,7 +8,7 @@
 >
 > Ce logiciel est devenu une référence pour les administrateurs réseau
 > car l'audit des rapports Nmap donne des indications sur la sécurité du réseau.
-> Il est disponible pour Windows, Mac OS X, Linux, BSD et Solaris.
+> Il est disponible pour Windows, Mac OS, Linux, BSD et Solaris.
 >
 > Recoder Nmap va être pour vous l'occasion d'approfondir
 > vos connaissances en réseau (TCP/IP) mais aussi de comprendre
