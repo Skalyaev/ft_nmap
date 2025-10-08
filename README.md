@@ -18,35 +18,31 @@
 
 ## Features
 
-- [ ] Host Discovery
+- [x] Host Discovery
 
-  - [ ] ICMP Echo probes
-  - [ ] TCP SYN/CONECT probes
+  - [x] ICMP Echo probes
+  - [x] TCP ACK/CONNECT probes
 
-- [ ] Port Scanning
+- [x] Port Scanning
 
-  - [ ] TCP SYN
-  - [ ] TCP Connect
-  - [ ] TCP NULL
-  - [ ] TCP FIN
-  - [ ] TCP XMAS
-  - [ ] TCP ACK
-  - [ ] TCP Window
-  - [ ] TCP Maimon
-  - [ ] UDP
+  - [x] TCP SYN
+  - [x] TCP NULL
+  - [x] TCP FIN
+  - [x] TCP XMAS
+  - [x] TCP ACK
+  - [x] TCP Connect
+  - [x] TCP Window
+  - [x] TCP Maimon
+  - [x] UDP
 
-- [ ] Service Version Detection
+- [x] OS Detection
 
-  - [ ] `WORK IN PROGRESS`
-
-- [ ] OS Detection
-
-  - [ ] `WORK IN PROGRESS`
+  - [x] `WORK IN PROGRESS`
 
 - [x] Firewall/IDS care
 
   - [x] Fragmentation
-  - [x] Source port manipulation
+  - [x] Source IP manipulation
   - [x] Timing
 
 ## Install

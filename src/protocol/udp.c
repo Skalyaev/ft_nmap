@@ -2,29 +2,24 @@
 
 extern t_nmap data;
 
-static void tcp_hdr(t_tcphdr* const hdr,
-                    const uint8_t flags,
+static void udp_hdr(t_udphdr* const hdr,
                     const uint16_t src_port,
                     const uint16_t dst_port) {
 
-    hdr->th_flags = flags;
-    hdr->th_sport = htons(src_port);
-    hdr->th_dport = htons(dst_port);
-
-    hdr->th_off = 5;
-    hdr->th_win = htons(5840);
-    hdr->th_seq = rand();
+    hdr->uh_sport = htons(src_port);
+    hdr->uh_dport = htons(dst_port);
+    hdr->uh_ulen = htons(T_UDPHDR_SIZE);
 }
 
-static void tcp_checksum(const t_iphdr* const iphdr,
-                         t_tcphdr* const tcphdr) {
+static void udp_checksum(const t_iphdr* const iphdr,
+                         t_udphdr* const udphdr) {
 
     t_pseudo_iphdr pseudo_iphdr = {0};
-    pseudo_iphdr.protocol = IPPROTO_TCP;
+    pseudo_iphdr.protocol = IPPROTO_UDP;
 
     pseudo_iphdr.saddr = iphdr->saddr;
     pseudo_iphdr.daddr = iphdr->daddr;
-    pseudo_iphdr.len = htons(T_TCPHDR_SIZE);
+    pseudo_iphdr.len = htons(T_UDPHDR_SIZE);
 
     uint8_t buffer[BUFFER_SIZE + 1] = {0};
     uint8_t size = 0;
@@ -32,15 +27,14 @@ static void tcp_checksum(const t_iphdr* const iphdr,
     memcpy(buffer, &pseudo_iphdr, T_PSEUDO_IPHDR_SIZE);
     size += T_PSEUDO_IPHDR_SIZE;
 
-    memcpy(buffer + size, tcphdr, T_TCPHDR_SIZE);
-    size += T_TCPHDR_SIZE;
+    memcpy(buffer + size, udphdr, T_UDPHDR_SIZE);
+    size += T_UDPHDR_SIZE;
 
-    tcphdr->th_sum = checksum((uint16_t*)buffer, size);
+    udphdr->uh_sum = checksum((uint16_t*)buffer, size);
 }
 
-int8_t tcp_probe(const char* const dst_host,
+int8_t udp_probe(const char* const dst_host,
                  const uint16_t dst_port,
-                 const uint8_t flags,
                  uint8_t* const recv_buff) {
 
     static uint16_t idx = 0;
@@ -48,36 +42,36 @@ int8_t tcp_probe(const char* const dst_host,
 
     const uint16_t src_port = 32768 + idx;
 
-    t_socket tcp_sock = new_socket(dst_host, dst_port, IPPROTO_TCP);
-    if(tcp_sock.fd == -1) return FAILURE;
+    t_socket udp_sock = new_socket(dst_host, dst_port, IPPROTO_UDP);
+    if(udp_sock.fd == -1) return FAILURE;
 
     t_socket icmp_sock = new_socket(dst_host, 0, IPPROTO_ICMP);
     if(icmp_sock.fd == -1) {
 
-        close(tcp_sock.fd);
+        close(udp_sock.fd);
         return FAILURE;
     }
     uint8_t send_buff[BUFFER_SIZE + 1] = {0};
 
     const uint32_t src_ip = data.opt.src_ip;
-    const uint32_t dst_ip = tcp_sock.addr.sin_addr.s_addr;
+    const uint32_t dst_ip = udp_sock.addr.sin_addr.s_addr;
 
     t_iphdr* iphdr = (t_iphdr*)send_buff;
-    ip_hdr(iphdr, IPPROTO_TCP, src_ip, dst_ip);
+    ip_hdr(iphdr, IPPROTO_UDP, src_ip, dst_ip);
 
     const uint8_t iphdr_size = iphdr->ihl << 2;
-    const uint8_t headers_size = iphdr_size + T_TCPHDR_SIZE;
+    const uint8_t headers_size = iphdr_size + T_UDPHDR_SIZE;
 
-    t_tcphdr* const tcphdr = (t_tcphdr*)(send_buff + iphdr_size);
+    t_udphdr* const udphdr = (t_udphdr*)(send_buff + iphdr_size);
 
-    tcp_hdr(tcphdr, flags, src_port, dst_port);
-    tcp_checksum(iphdr, tcphdr);
+    udp_hdr(udphdr, src_port, dst_port);
+    udp_checksum(iphdr, udphdr);
 
     for(uint8_t attempt = 0; attempt < REQ_RETRIES; attempt++) {
 
-        if(new_probe(&tcp_sock, headers_size,
+        if(new_probe(&udp_sock, headers_size,
                      send_buff, recv_buff,
-                     IPPROTO_TCP, src_port, dst_port) == FAILURE) break;
+                     IPPROTO_UDP, src_port, dst_port) == FAILURE) break;
         if(*recv_buff) break;
 
         bool found = NO;
@@ -101,18 +95,18 @@ int8_t tcp_probe(const char* const dst_host,
             t_iphdr* const in_ip = (t_iphdr*)inner;
 
             const uint8_t in_ihl = in_ip->ihl << 2;
-            if(in_ip->protocol != IPPROTO_TCP) continue;
+            if(in_ip->protocol != IPPROTO_UDP) continue;
 
-            t_tcphdr* const in_tcp = (t_tcphdr*)(inner + in_ihl);
-            if(ntohs(in_tcp->th_sport) != src_port) continue;
-            if(ntohs(in_tcp->th_dport) != dst_port) continue;
+            t_udphdr* const in_udp = (t_udphdr*)(inner + in_ihl);
+            if(ntohs(in_udp->uh_sport) != src_port) continue;
+            if(ntohs(in_udp->uh_dport) != dst_port) continue;
 
             found = YES;
             break;
         }
         if(found) break;
     }
-    close(tcp_sock.fd);
+    close(udp_sock.fd);
     close(icmp_sock.fd);
     return getcode() ? FAILURE : SUCCESS;
 }

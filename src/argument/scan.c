@@ -18,9 +18,8 @@ void default_scans() {
 int8_t new_scans(char* const arg) {
 
     char** const buffer = read_arg(arg);
-    if(!buffer) return EXIT_FAILURE;
+    if(!buffer) return FAILURE;
 
-    bool failed = NO;
     for(uint16_t x = 0; buffer[x]; x++) {
 
         if(!strcmp(buffer[x], "SYN")) data.opt.flags |= SYN_SCAN;
@@ -33,12 +32,13 @@ int8_t new_scans(char* const arg) {
         else if(!strcmp(buffer[x], "MAIMON")) data.opt.flags |= MAIMON_SCAN;
         else if(!strcmp(buffer[x], "UDP")) data.opt.flags |= UDP_SCAN;
         else {
-            fprintf(stderr, "Error: unknown scan type '%s'\n", buffer[x]);
-            failed = YES;
+            data.code = EINVAL;
+            error(strerror(EINVAL));
             break;
         }
     }
     for(uint16_t x = 0; buffer[x]; x++) free(buffer[x]);
     free(buffer);
-    return failed ? EXIT_FAILURE : EXIT_SUCCESS;
+
+    return data.code ? FAILURE : SUCCESS;
 }

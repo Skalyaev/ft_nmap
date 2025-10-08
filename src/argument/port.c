@@ -4,52 +4,55 @@ extern t_nmap data;
 
 void default_ports() {
 
-    const uint16_t ports[] = {
-
-        21, 22, 23, 25, 53, 80, 110, 111, 135, 139, 143, 443,
-        445, 993, 995, 1723, 3306, 3389, 5900, 8080, 8443
-    };
-    memcpy(data.ports, ports, sizeof(ports));
+    for(uint16_t port = 1; port <= 1024; port++)
+        data.ports[port - 1] = port;
 }
 
-static int8_t read_range(const uint16_t idx,
-                         char** const buffer,
-                         uint16_t* const ports,
-                         uint16_t* const offset) {
+static int8_t parse_range(const uint16_t idx,
+                          char** const buffer,
+                          uint16_t* const ports,
+                          uint16_t* const offset) {
 
     char* token = strtok(buffer[idx], "-");
     if(!token) {
 
-        fprintf(stderr, "Error: invalid port range\n");
-        return EXIT_FAILURE;
+        data.code = EINVAL;
+        error(strerror(EINVAL));
+        return FAILURE;
     }
     const uint16_t start = atoi(token);
+
     token = strtok(NULL, "-");
     if(!token) {
 
-        fprintf(stderr, "Error: invalid port range\n");
-        return EXIT_FAILURE;
+        data.code = EINVAL;
+        error(strerror(EINVAL));
+        return FAILURE;
     }
     const uint16_t end = atoi(token);
+
     if(!start || !end || start > end) {
 
-        fprintf(stderr, "Error: invalid port range\n");
-        return EXIT_FAILURE;
+        data.code = EINVAL;
+        error(strerror(EINVAL));
+        return FAILURE;
     }
     ports[idx] = start;
+
     for(uint16_t port = start + 1; port <= end; port++) {
 
         if(*offset == BUFFER_SIZE) {
 
-            fprintf(stderr, "Error: too many ports\n");
-            return EXIT_FAILURE;
+            data.code = E2BIG;
+            error(strerror(E2BIG));
+            return FAILURE;
         }
         ports[(*offset)++] = port;
     }
-    return EXIT_SUCCESS;
+    return SUCCESS;
 }
 
-static uint16_t* read_ports(char* const arg) {
+static uint16_t* parse_ports(char* const arg) {
 
     char** const buffer = read_arg(arg);
     if(!buffer) return NULL;
@@ -62,7 +65,8 @@ static uint16_t* read_ports(char* const arg) {
         for(uint16_t x = 0; buffer[x]; x++) free(buffer[x]);
         free(buffer);
 
-        perror("malloc");
+        data.code = errno;
+        error(strerror(errno));
         return NULL;
     }
     memset(ports, 0, buffer_size);
@@ -71,7 +75,7 @@ static uint16_t* read_ports(char* const arg) {
     while(buffer[size]) size++;
 
     uint16_t offset = size;
-    bool failed = NO;
+
     for(uint16_t x = 0; x < size; x++) {
 
         if(!strchr(buffer[x], '-')) {
@@ -79,40 +83,41 @@ static uint16_t* read_ports(char* const arg) {
             ports[x] = atoi(buffer[x]);
             if(ports[x]) continue;
 
-            fprintf(stderr, "Error: invalid port '%s'\n", buffer[x]);
-            failed = YES;
+            data.code = EINVAL;
+            error(strerror(EINVAL));
             break;
         }
-        if(read_range(x, buffer, ports, &offset) == EXIT_SUCCESS) continue;
-        failed = YES;
-        break;
+        if(parse_range(x, buffer, ports, &offset) == FAILURE) break;
     }
     for(uint16_t x = 0; buffer[x]; x++) free(buffer[x]);
     free(buffer);
-    if(!failed) return ports;
+    if(data.code) {
 
-    free(ports);
-    return NULL;
+        free(ports);
+        return NULL;
+    }
+    return ports;
 }
 
 int8_t new_ports(char* const arg) {
 
     static uint16_t idx = 0;
 
-    uint16_t* const buffer = read_ports(arg);
-    if(!buffer) return EXIT_FAILURE;
+    uint16_t* const buffer = parse_ports(arg);
+    if(!buffer) return FAILURE;
 
-    bool failed = NO;
     bool duplicate;
+
     for(uint16_t x = 0; buffer[x]; x++) {
 
         if(idx == MAX_PORTS) {
 
-            fprintf(stderr, "Error: too many ports specified\n");
-            failed = YES;
+            data.code = E2BIG;
+            error(strerror(E2BIG));
             break;
         }
         duplicate = NO;
+
         for(uint16_t y = 0; data.ports[y]; y++) {
 
             if(buffer[x] != data.ports[y]) continue;
@@ -120,8 +125,10 @@ int8_t new_ports(char* const arg) {
             break;
         }
         if(duplicate) continue;
+
         data.ports[idx++] = buffer[x];
     }
     free(buffer);
-    return failed ? EXIT_FAILURE : EXIT_SUCCESS;
+
+    return data.code ? FAILURE : SUCCESS;
 }

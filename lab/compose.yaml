@@ -1,92 +1,19 @@
-networks:
-  database:
-    internal: true
-  backend:
-    driver: bridge
-  frontend:
-    driver: bridge
-
 services:
-  #============================= DATABASE
-  database:
+  #=================== TCP 80
+  tcp-80:
     build:
-      context: ./database
-    image: database
-    container_name: database
-    environment:
-      - PGHOST=database
-      - PGPORT=8484
-      - PGDATABASE=database
-      - PGUSER=dbuser
-      - PGPASSWORD=123
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=123
-      - POSTGRES_INITDB_ARGS=--data-checksums --auth-host=md5
-      - AUTH_ALGO_DB=md5
-    volumes:
-      - ./database/postgres:/var/lib/postgresql/data
-    networks:
-      - database
-    restart: always
-
-  #============================= API
-  api:
-    depends_on:
-      - database
-    build:
-      context: ./api
-    image: api
-    container_name: api
-    environment:
-      - HOST_BACK=api
-      - PORT_BACK=4242
-      - DRIVER_DB=postgresql
-      - NAME_DB=database
-      - HOST_DB=database
-      - PORT_DB=8484
-      - USER_DB=dbuser
-      - PASS_DB=123
-      - PYTHONUNBUFFERED=1
-      - PYTHONDONTWRITEBYTECODE=1
-    networks:
-      - database
-      - backend
-    restart: always
-
-  #============================= WEBAPP
-  webapp:
-    build:
-      context: ./client/web
-    image: web
-    container_name: web
-    environment:
-      - HOST_FRONT=web
-      - PORT_FRONT=2121
-    networks:
-      - frontend
-    restart: always
-
-  #============================= PROXY
-  proxy:
-    depends_on:
-      - api
-      - webapp
-    build:
-      context: ./proxy
-    image: proxy
-    container_name: proxy
-    environment:
-      - HTTP_PORT=80
-      - HTTPS_PORT=443
-      - SSL_CERT=dev
-      - HOST_BACK=api
-      - PORT_BACK=4242
-      - HOST_FRONT=web
-      - PORT_FRONT=2121
-    networks:
-      - backend
-      - frontend
+      context: ./tcp-80
+    image: tcp-80
+    container_name: tcp-80
     ports:
-      - 80:80
-      - 443:443
+      - "80:80/tcp"
+    restart: always
+  #=================== UDP 1024
+  udp-1024:
+    build:
+      context: ./udp-1024
+    image: udp-1024
+    container_name: udp-1024
+    ports:
+      - "1024:1024/udp"
     restart: always

@@ -1,24 +1,50 @@
 #ifndef DEFINE_H
 #define DEFINE_H
 
+#define BUFFER_SIZE 1024
+
 #define MAX_HOSTS 512
 #define MAX_PORTS 1024
 #define MAX_THREADS 250
 
-#define BUFFER_SIZE 1024
-
-#define BODY_SIZE 12
-#define FRAGMENT_SIZE 8
-#define FRAGMENT_INTERVAL 0.05 * 1000000
-#define DEFAULT_SLEEP_TIME 0.8 * 1000000
-#define REQ_TIMEOUT 0.8 * 1000000
-#define REQ_RETRIES 4
-
 #define YES 1
 #define NO 0
 
-#define EXIT_SUCCESS 0
-#define EXIT_FAILURE 1
+// EXIT CODES
+// ==========
+#define SUCCESS 0
+#define FAILURE -1
+
+// REQUESTS
+// ========
+#define REQ_TASK_INTERVAL 0.4 * 1000000
+#define REQ_FRAGMENT_SIZE 8
+#define REQ_FRAGMENT_INTERVAL 0.04 * 1000000
+#define REQ_RETRIES 4
+#define REQ_TIMEOUT 0.8 * 1000000
+
+// TASKS
+// =====
+#define TASK_HOST_DISCOVERY 1
+#define TASK_OS_DETECTION 2
+#define TASK_SYN_SCAN 3
+#define TASK_NULL_SCAN 4
+#define TASK_FIN_SCAN 5
+#define TASK_XMAS_SCAN 6
+#define TASK_ACK_SCAN 7
+#define TASK_CONNECT_SCAN 8
+#define TASK_WINDOW_SCAN 9
+#define TASK_MAIMON_SCAN 10
+#define TASK_UDP_SCAN 11
+
+// PORT STATES
+// ===========
+#define PORT_OPEN 1
+#define PORT_CLOSED 2
+#define PORT_FILTERED 3
+#define PORT_UNFILTERED 4
+#define PORT_OPEN_FILTERED 5
+#define PORT_CLOSED_FILTERED 6
 
 // TYPEDEF
 // =======
@@ -34,6 +60,9 @@ typedef struct iphdr t_iphdr;
 typedef struct icmphdr t_icmphdr;
 typedef struct udphdr t_udphdr;
 typedef struct tcphdr t_tcphdr;
+typedef struct hostent t_hostent;
+typedef struct timeval t_timeval;
+typedef struct winsize t_winsize;
 
 // SIZES
 // =====
@@ -49,6 +78,9 @@ typedef struct tcphdr t_tcphdr;
 #define T_ICMPHDR_SIZE sizeof(t_icmphdr)
 #define T_UDPHDR_SIZE sizeof(t_udphdr)
 #define T_TCPHDR_SIZE sizeof(t_tcphdr)
+#define T_HOSTENT_SIZE sizeof(t_hostent)
+#define T_TIMEVAL_SIZE sizeof(t_timeval)
+#define T_WINSIZE_SIZE sizeof(t_winsize)
 #define PTHREAD_T_SIZE sizeof(pthread_t)
 
 #define BYTE_SIZE sizeof(char)
@@ -65,22 +97,16 @@ typedef struct tcphdr t_tcphdr;
 #define INT32_SIZE sizeof(int32_t)
 #define INT64_SIZE sizeof(int64_t)
 
-// COLORS
+// OUTPUT
 // ======
+#define RST "\033[0m"
+#define BOLD "\033[1m"
+#define ITALIC "\033[3m"
+
+#define GRAY "\033[1;30m"
 #define RED "\033[0;31m"
 #define GREEN "\033[0;32m"
 #define YELLOW "\033[0;33m"
-#define BLUE "\033[0;34m"
-#define MAGENTA "\033[0;35m"
-#define CYAN "\033[0;36m"
-#define WHITE "\033[0;37m"
-#define RESET "\033[0m"
-
-#define BOLD "\033[1m"
-#define DIM "\033[2m"
-#define ITALIC "\033[3m"
-#define UNDERLINE "\033[4m"
-#define BLINK "\033[5m"
 
 // BPF
 // ===

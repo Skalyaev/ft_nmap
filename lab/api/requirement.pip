@@ -1,4 +1,0 @@
-uvicorn
-fastapi
-sqlmodel
-psycopg2

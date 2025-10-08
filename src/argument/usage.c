@@ -1,41 +1,35 @@
 #include "../../include/header.h"
 
-const char* usage() {
+void usage(const char* const name) {
 
-    return "\nNmap 0.1 "ITALIC"(JeFéDuRézo edition)"RESET"\n"\
-           "\n"\
-           BOLD"USAGE:"RESET" %s "GREEN"[OPTIONS]"RESET"\n"\
-           "\n"\
-           BOLD"TARGET SPECIFICATION:"RESET"\n"\
-           "\t"GREEN"-i --ip"RESET" IP1,HOST2...\t\tAdd targets\n"\
-           "\t"GREEN"-f --file"RESET" FILE\t\t\tAdd targets from file\n"\
-           "\n"\
-           BOLD"HOST DISCOVERY:"RESET"\n"\
-           "\t"GREEN"-d --dns"RESET"\t\t\tEnable DNS resolution\n"\
-           "\n"\
-           BOLD"SCAN TECHNIQUES:"RESET"\n"\
-           "\t"GREEN"-s --scan"RESET" TYPE1,TYPE2,...\tAdd scan techniques\n"\
-           "\t\t\t\t\t(SYN/NULL/FIN/XMAS/ACK\n"\
-           "\t\t\t\t\tCONNECT/WINDOW/MAIMON/UDP)\n"\
-           "\n"\
-           BOLD"PORT SPECIFICATION:"RESET"\n"\
-           "\t"GREEN"-p --port"RESET" PORT1,PORT2,...\tAdd target ports\n"\
-           "\n"\
-           BOLD"OS DETECTION:"RESET"\n"\
-           "\t"GREEN"-o --os"RESET"\t\t\t\tEnable OS detection\n"\
-           "\n"\
-           BOLD"TIMING AND PERFORMANCE:"RESET"\n"\
-           "\t"GREEN"-t --speedup"RESET" THREADS\t\tNumber of threads to use\n"\
-           "\n"\
-           BOLD"FIREWALL/IDS EVASION:"RESET"\n"\
-           "\t"GREEN"-F --firewall"RESET"\t\t\tEnable firewall care\n"\
-           "\t"GREEN"-I --ids"RESET"\t\t\tEnable IDS care\n"\
-           "\n"\
-           BOLD"MISSCELLANEOUS:"RESET"\n"\
-           "\t"GREEN"-h --help"RESET"\t\t\tPrint this message\n"\
-           "\n"\
-           BOLD"EXAMPLES:"RESET"\n"\
-           "\t%1$s -i 127.0.0.1 -p 80,443 -s CONNECT\n"\
-           "\t%1$s -h exemple.com -o -s -t 250\n"\
-           "\t%1$s -f targets.txt -d -p 1-1024\n\n";
+    const char* const msg = "\n"\
+        BOLD"Nmap "RST""ITALIC"(JeFéDuRézo edition)"RST"\n"\
+        "\n"\
+        BOLD"USAGE: "RST"%s "GREEN"[OPTION(S)]"RST"\n"\
+        "\n"\
+        BOLD"TARGET SPECIFICATION:"RST"\n"\
+        "\t"GREEN"-i --ip"RST" IP1,HOST2\tTarget hosts\n"\
+        "\t"GREEN"-f --file"RST" FILE\t\tTarget hosts from file\n"\
+        "\t"GREEN"-p --ports"RST" PORTS\tTarget ports\n"\
+        "\n"\
+        BOLD"SCAN TECHNIQUES:"RST"\n"\
+        "\t"GREEN"-s --scan"RST" TYPES\t\tScan techniques\n"\
+        "\t\t\t\t(SYN/NULL/FIN/XMAS/ACK\n"\
+        "\t\t\t\tCONNECT/WINDOW/MAIMON/UDP)\n"\
+        ""\
+        BOLD"OS DETECTION:"RST"\n"\
+        "\t"GREEN"-o --os"RST"\t\t\tOS detection\n"\
+        "\n"\
+        BOLD"TIMING AND PERFORMANCE:"RST"\n"\
+        "\t"GREEN"-t --speedup"RST" THREADS\tWorking threads (1-250)\n"\
+        "\t"GREEN"-T --timing"RST" LEVEL\tTiming level (1-5)\n"\
+        "\n"\
+        BOLD"FIREWALL/IDS EVASION:"RST"\n"\
+        "\t"GREEN"-F --fragment"RST"\t\tPacket fragmentation\n"\
+        "\t"GREEN"-I --source-ip"RST"\t\tSource IP address\n"\
+        "\n"\
+        BOLD"MISCELLANEOUS:"RST"\n"\
+        "\t"GREEN"-h --help"RST"\t\tHelp message\n"\
+        "\n";
+    printf(msg, name);
 }

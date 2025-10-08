@@ -2,102 +2,133 @@
 
 extern t_nmap data;
 
-static int8_t switch_opt(const int opt,
-                         char* const arg,
-                         char** const av,
-                         bool* const use_default_scans,
-                         bool* const use_default_ports) {
+static int8_t optswitch(const int opt,
+                        char* const optarg,
+                        char** const av,
+                        bool* const use_default_scans,
+                        bool* const use_default_ports) {
     switch(opt) {
+
     case 'i':
     case 'f':
-        if(new_hosts(opt, arg) == EXIT_FAILURE) return EXIT_FAILURE;
+        if(new_hosts(opt, optarg) == FAILURE) return FAILURE;
         break;
-    case 'd':
-        data.opt.flags |= RESOLVE;
-        break;
-    case 's':
-        if(new_scans(arg) == EXIT_FAILURE) return EXIT_FAILURE;
-        *use_default_scans = NO;
-        break;
+
     case 'p':
-        if(new_ports(arg) == EXIT_FAILURE) return EXIT_FAILURE;
+        if(new_ports(optarg) == FAILURE) return FAILURE;
         *use_default_ports = NO;
         break;
+
+    case 's':
+        if(new_scans(optarg) == FAILURE) return FAILURE;
+        *use_default_scans = NO;
+        break;
+
     case 'o':
         data.opt.flags |= OS_DETECT;
         break;
+
     case 't':
-        data.opt.thread_count = atoi(arg);
-        if(data.opt.thread_count && data.opt.thread_count <= MAX_THREADS) break;
+        data.opt.thread_count = atoi(optarg);
+        if(data.opt.thread_count && data.opt.thread_count <= MAX_THREADS)
+                break;
 
-        fprintf(stderr, "Error: invalid number of threads '%s'\n", arg);
-        return EXIT_FAILURE;
+        data.code = EINVAL;
+        error(strerror(EINVAL));
+        return FAILURE;
+
     case 'F':
-        data.opt.flags |= FIREWALL_CARE;
-        data.opt.sleep_time = DEFAULT_SLEEP_TIME * 4;
+        data.opt.flags |= PACKET_FRAGMENT;
         break;
-    case 'I':
-        data.opt.flags |= IDS_CARE;
-        data.opt.sleep_time = DEFAULT_SLEEP_TIME * 4;
-        break;
-    case 'h':
-        printf(usage(), av[0]);
 
-        for(uint16_t x = 0; data.hosts[x]; x++) free(data.hosts[x]);
-        exit(EXIT_SUCCESS);
+    case 'I':
+        data.opt.src_ip = inet_addr(optarg);
+        if(data.opt.src_ip != INADDR_NONE) break;
+
+        data.code = EINVAL;
+        error(strerror(EINVAL));
+        return FAILURE;
+
+    case 'T':
+        const uint32_t timing = atoi(optarg);
+        if(!timing || timing > 5) {
+
+            data.code = EINVAL;
+            error(strerror(EINVAL));
+            return FAILURE;
+        }
+        if(timing == 1) data.opt.task_interval = REQ_TASK_INTERVAL * 5;
+        else if(timing == 2) data.opt.task_interval = REQ_TASK_INTERVAL * 2;
+        else if(timing == 3) data.opt.task_interval = REQ_TASK_INTERVAL;
+        else if(timing == 4) data.opt.task_interval = REQ_TASK_INTERVAL / 2;
+        else if(timing == 5) data.opt.task_interval = REQ_TASK_INTERVAL / 5;
+        break;
+
+    case 'h':
+        usage(av[0]);
+        data.code = SUCCESS;
+        return FAILURE;
+
     default:
-        fprintf(stderr, "try '%s -h' for more information\n", av[0]);
-        return EXIT_FAILURE;
+        data.code = EINVAL;
+        error(strerror(EINVAL));
+        return FAILURE;
     }
-    return EXIT_SUCCESS;
+    return SUCCESS;
 }
 
-void get_args(const int ac, char** const av) {
+int8_t parse_args(const int ac, char** const av) {
 
-    data.opt.sleep_time = DEFAULT_SLEEP_TIME;
+    if(ac == 1) {
+
+        usage(av[0]);
+        data.code = EINVAL;
+        return FAILURE;
+    }
     data.opt.thread_count = 1;
-    const t_option options[] = {
-
-        {"ip", required_argument, 0, 'i'},
-        {"file", required_argument, 0, 'f'},
-        {"dns", no_argument, 0, 'd'},
-        {"scan", required_argument, 0, 's'},
-        {"port", required_argument, 0, 'p'},
-        {"os", no_argument, 0, 'o'},
-        {"speedup", required_argument, 0, 't'},
-        {"firewall", no_argument, 0, 'F'},
-        {"ids", no_argument, 0, 'I'},
-        {"help", no_argument, 0, 'h'},
-        {0, 0, 0, 0}
-    };
-    const char* const optstring = "i:f:s:p:t:doFIh";
+    data.opt.task_interval = REQ_TASK_INTERVAL;
 
     bool use_default_scans = YES;
     bool use_default_ports = YES;
-    bool failed = NO;
 
+    const t_option opts[] = {
+
+        {"ip", required_argument, 0, 'i'},
+        {"file", required_argument, 0, 'f'},
+        {"ports", required_argument, 0, 'p'},
+        {"scan", required_argument, 0, 's'},
+        {"os", no_argument, 0, 'o'},
+        {"speedup", required_argument, 0, 't'},
+        {"fragment", no_argument, 0, 'F'},
+        {"source-ip", required_argument, 0, 'I'},
+        {"timing", required_argument, 0, 'T'},
+        {"help", no_argument, 0, 'h'},
+        {0, 0, 0, 0}
+    };
+    const char* const optstring = "i:f:p:s:t:I:T:oFh";
+    extern char* optarg;
+    extern int optind, opterr;
+    opterr = 0;
+
+    int opt = 0;
     int idx = 0;
-    int opt;
-    while((opt = getopt_long(ac, av, optstring, options, &idx)) != -1) {
+    while(YES) {
 
-        if(switch_opt(opt, optarg, av,
-                      &use_default_scans,
-                      &use_default_ports) == EXIT_SUCCESS) continue;
-        failed = YES;
-        break;
-    }
-    if(failed) {
+        opt = getopt_long(ac, av, optstring, opts, &idx);
+        if(opt == -1) break;
 
-        for(uint16_t x = 0; data.hosts[x]; x++) free(data.hosts[x]);
-        exit(EXIT_FAILURE);
+        if(optswitch(opt, optarg, av,
+                     &use_default_scans,
+                     &use_default_ports) == FAILURE) return FAILURE;
     }
-    if(data.hosts[0]) {
+    if(!data.hosts[0] || ac != optind) {
 
-        if(use_default_scans) default_scans();
-        if(use_default_ports) default_ports();
-        return;
+        data.code = EINVAL;
+        error(strerror(EINVAL));
+        return FAILURE;
     }
-    fprintf(stderr, "%s: no target specified\n", av[0]);
-    fprintf(stderr, "try '%s -h' for more information\n", av[0]);
-    exit(EXIT_FAILURE);
+    if(use_default_scans) default_scans();
+    if(use_default_ports) default_ports();
+
+    return SUCCESS;
 }
